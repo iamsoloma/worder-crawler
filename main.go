@@ -7,22 +7,22 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/TinajXD/worder-crawler/config"
 	"github.com/gocolly/colly"
 	"github.com/saintfish/chardet"
-	
+
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/charset"
 )
 
 func main() {
 	fmt.Println("Starting...")
-	userAgent := "Worder/0.1"
-	//url := "https://ru.wikipedia.org/wiki/Челябинск"
-	url:= "https://habr.com/ru/articles/40218/"
+	cfg := config.GetConf()
+	url := "https://ru.wikipedia.org/wiki/Челябинск"
 	//url := "http://az.lib.ru/t/tolstoj_lew_nikolaewich/text_0040.shtml"
-	data := fetch(url, userAgent)
+	data := fetch(url, cfg.UserAgent)
 	tags := tagger(data)
-	links := linker(url, userAgent)
+	links := linker(url, cfg.UserAgent)
 	for _, tag := range tags{
 		if tag != "" {
 			fmt.Println(fmt.Sprint(len(tag)) + " : " + tag)
