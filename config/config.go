@@ -14,7 +14,11 @@ type Config struct {
 }
 
 type Surreal struct {
-	//UserAgent     string        `yaml:"userAgent" env-default:"Worder/0.1"`
+	Addr string `yaml:"addr"`
+	User string `yaml:"user"`
+	Password string `yaml:"password"`
+	Namespace string `yaml:"namespace"`
+	Database string `yaml:"database"`
 }
 
 func GetConf() *Config {

@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 
 	"github.com/TinajXD/worder-crawler/config"
+	"github.com/TinajXD/worder-crawler/storage"
 	"github.com/TinajXD/worder-crawler/translate"
 
 	"github.com/gocolly/colly"
@@ -19,12 +20,30 @@ import (
 func main() {
 	fmt.Println("Starting...")
 	cfg := config.GetConf()
-	url := "https://ru.wikipedia.org/wiki/Челябинск"
-	//url := "http://az.lib.ru/t/tolstoj_lew_nikolaewich/text_0040.shtml"
+	db := storage.Init(cfg.Surreal.Addr, cfg.Surreal.User, cfg.Surreal.Password, cfg.Surreal.Namespace, cfg.Surreal.Database)
+	defer db.Close()
+	//url := "https://ru.wikipedia.org/wiki/Челябинск"
+	url := "http://az.lib.ru/t/tolstoj_lew_nikolaewich/text_0040.shtml"
 	data := fetch(url, cfg.UserAgent)
 	tags := tagger(data)
 	links := linker(url, cfg.UserAgent)
-	out := []string{}
+	next := []string{}
+	for _, l := range links {
+		next = append(next, l)
+	}
+
+	text := strings.Join(tags, " ")
+
+	fmt.Println("Saving...")
+	page := storage.Page{
+		ID: url,
+		Text:  text,
+		Links: next,
+		Date: time.Now().UTC(),
+	}
+	storage.AddPage(db, page)
+
+	/*out := []string{}
 	for _, tag := range tags {
 		if tag != "" {
 			out = append(out, fmt.Sprintf(fmt.Sprint(len(tag))+" : "+tag+"\n"))
@@ -35,7 +54,9 @@ func main() {
 			out = append(out, fmt.Sprintf("Link found: %s -> %s\n", name, link))
 		}
 	}
-	var file *os.File
+	fmt.Println(out)*/
+
+	/*var file *os.File
 	if _, err := os.Stat("./out.txt"); os.IsNotExist(err) {
 		file, err = os.Create("./out.txt")
 		if err != nil {
@@ -48,7 +69,7 @@ func main() {
 				fmt.Println(err)
 			}
 		}
-	}
+	}*/
 }
 
 func fetch(url, userAgent string) string {
@@ -98,6 +119,7 @@ func tagger(strHtml string) (tags []string) {
 		case "link":
 			tokenizer.Next()
 		}
+		
 
 		if tokenType == html.TextToken {
 			content := strings.TrimSpace(token.Data)
